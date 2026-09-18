@@ -1,0 +1,55 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#define SIZE 100
+
+int main() {
+    int read_fd, write_fd;
+    char message[SIZE];
+    char response[SIZE];
+
+    printf("Server started...\n");
+
+    read_fd = open("client_to_server", O_RDONLY);
+
+    write_fd = open("server_to_client", O_WRONLY);
+
+    while (1) {
+        memset(message, 0, SIZE);
+
+        int n = read(read_fd, message, SIZE - 1);
+
+        if (n <= 0) {
+            continue;
+        }
+
+        message[n] = '\0';
+
+        printf("Client says: %s\n", message);
+
+        if (strcmp(message, "exit") == 0) {
+            strcpy(response, "Server shutting down.");
+            write(write_fd, response, strlen(response) + 1);
+            break;
+        }
+
+        snprintf(response, SIZE, "Server processed: %.70s", message);
+
+        write(write_fd, response, strlen(response) + 1);
+
+        printf("Response sent: %s\n", response);
+    }
+
+    close(read_fd);
+    close(write_fd);
+
+    unlink("client_to_server");
+    unlink("server_to_client");
+
+    printf("Server stopped.\n");
+
+    return 0;
+}
